@@ -1,5 +1,7 @@
-"homepage": "https://github.com/karan-devops-rchilli/aws-cost-calculator.git",
-"scripts": {
-  "predeploy": "npm run build",
-  "deploy": "gh-pages -d build"
+{
+  "homepage": "https://karan-devops-rchilli.github.io/aws-cost-calculator",
+  "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
+  }
 }
