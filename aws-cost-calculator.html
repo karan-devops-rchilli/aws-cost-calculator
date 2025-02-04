@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AWS Cost Calculator</title>
+    <script>
+        async function fetchInstancePricing() {
+            const response = await fetch('https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/index.json');
+            const data = await response.json();
+            const instances = Object.values(data.products).filter(p => p.attributes.instanceType);
+            
+            let instancePricing = {};
+            instances.forEach(instance => {
+                let instanceType = instance.attributes.instanceType;
+                let price = instance.terms.OnDemand ? Object.values(instance.terms.OnDemand)[0].priceDimensions[Object.keys(instance.terms.OnDemand)[0] + '.USD'].pricePerUnit.USD : '0';
+                instancePricing[instanceType] = parseFloat(price);
+            });
+            return instancePricing;
+        }
+        
+        async function populateInstanceDropdown() {
+            let instancePricing = await fetchInstancePricing();
+            let eksDropdown = document.getElementById("eksType");
+            
+            Object.keys(instancePricing).forEach(instanceType => {
+                let option = document.createElement("option");
+                option.value = instanceType;
+                option.textContent = instanceType;
+                eksDropdown.appendChild(option);
+            });
+        }
+        
+        async function calculateCost() {
+            let instancePricing = await fetchInstancePricing();
+            let eksType = document.getElementById("eksType").value;
+            let eksNodes = parseInt(document.getElementById("eksNodes").value);
+            let storage = parseInt(document.getElementById("storage").value);
+            let dataTransfer = parseInt(document.getElementById("dataTransfer").value);
+            
+            let eksCost = (instancePricing[eksType] || 0) * eksNodes * 24 * 30;
+            let storageCost = storage * 0.10;
+            let dataTransferCost = dataTransfer * 0.09;
+            let totalCost = eksCost + storageCost + dataTransferCost;
+            
+            document.getElementById("costOutput").innerHTML = `
+                <strong>Estimated Monthly Cost Breakdown:</strong><br>
+                - EKS (${eksType} x ${eksNodes} nodes): $${eksCost.toFixed(2)}<br>
+                - Storage (${storage} GB): $${storageCost.toFixed(2)}<br>
+                - Data Transfer (${dataTransfer} GB): $${dataTransferCost.toFixed(2)}<br>
+                <strong>Total Estimated Cost: $${totalCost.toFixed(2)}</strong>
+            `;
+        }
+
+        window.onload = populateInstanceDropdown;
+    </script>
+</head>
+<body>
+    <h2>AWS Cost Calculator</h2>
+    <label for="eksType">Select EKS Node Type:</label>
+    <select id="eksType"></select>
+    <br><br>
+    <label for="eksNodes">Number of EKS Nodes:</label>
+    <input type="number" id="eksNodes" value="4" min="1" max="500">
+    <br><br>
+    <label for="storage">Storage (GB):</label>
+    <input type="number" id="storage" value="100" min="10" max="5000">
+    <br><br>
+    <label for="dataTransfer">Data Transfer (GB):</label>
+    <input type="number" id="dataTransfer" value="100" min="10" max="10000">
+    <br><br>
+    <button onclick="calculateCost()">Calculate Cost</button>
+    <br><br>
+    <div id="costOutput"></div>
+</body>
+</html>
