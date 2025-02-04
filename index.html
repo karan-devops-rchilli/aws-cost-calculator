@@ -1,20 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AWS Cost Calculator</title>
+    <title>AWS Cost Calculator by Karan Garg</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background-color: #f4f4f4; }
+        .container { width: 50%; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 0px 10px 0px #ccc; }
+        h2 { color: #0073e6; }
+        label, select, input, button { display: block; margin: 10px auto; }
+        button { padding: 10px 20px; background: #0073e6; color: white; border: none; cursor: pointer; }
+        button:hover { background: #005bb5; }
+        #costOutput { margin-top: 20px; font-weight: bold; }
+    </style>
     <script>
         async function fetchInstancePricing() {
-            const response = await fetch('https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/index.json');
-            const data = await response.json();
-            const instances = Object.values(data.products).filter(p => p.attributes.instanceType);
-            
-            let instancePricing = {};
-            instances.forEach(instance => {
-                let instanceType = instance.attributes.instanceType;
-                let price = instance.terms.OnDemand ? Object.values(instance.terms.OnDemand)[0].priceDimensions[Object.keys(instance.terms.OnDemand)[0] + '.USD'].pricePerUnit.USD : '0';
-                instancePricing[instanceType] = parseFloat(price);
-            });
-            return instancePricing;
+            try {
+                const response = await fetch('https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/index.json');
+                const data = await response.json();
+                const instances = Object.values(data.products).filter(p => p.attributes.instanceType);
+                
+                let instancePricing = {};
+                instances.forEach(instance => {
+                    let instanceType = instance.attributes.instanceType;
+                    let price = instance.terms.OnDemand ? Object.values(instance.terms.OnDemand)[0].priceDimensions[Object.keys(instance.terms.OnDemand)[0] + '.USD'].pricePerUnit.USD : '0';
+                    instancePricing[instanceType] = parseFloat(price);
+                });
+                return instancePricing;
+            } catch (error) {
+                console.error("Error fetching pricing data:", error);
+            }
         }
         
         async function populateInstanceDropdown() {
@@ -54,21 +67,18 @@
     </script>
 </head>
 <body>
-    <h2>AWS Cost Calculator</h2>
-    <label for="eksType">Select EKS Node Type:</label>
-    <select id="eksType"></select>
-    <br><br>
-    <label for="eksNodes">Number of EKS Nodes:</label>
-    <input type="number" id="eksNodes" value="4" min="1" max="500">
-    <br><br>
-    <label for="storage">Storage (GB):</label>
-    <input type="number" id="storage" value="100" min="10" max="5000">
-    <br><br>
-    <label for="dataTransfer">Data Transfer (GB):</label>
-    <input type="number" id="dataTransfer" value="100" min="10" max="10000">
-    <br><br>
-    <button onclick="calculateCost()">Calculate Cost</button>
-    <br><br>
-    <div id="costOutput"></div>
+    <div class="container">
+        <h2>AWS Cost Calculator by Karan Garg</h2>
+        <label for="eksType">Select EKS Node Type:</label>
+        <select id="eksType"></select>
+        <label for="eksNodes">Number of EKS Nodes:</label>
+        <input type="number" id="eksNodes" value="4" min="1" max="500">
+        <label for="storage">Storage (GB):</label>
+        <input type="number" id="storage" value="100" min="10" max="5000">
+        <label for="dataTransfer">Data Transfer (GB):</label>
+        <input type="number" id="dataTransfer" value="100" min="10" max="10000">
+        <button onclick="calculateCost()">Calculate Cost</button>
+        <div id="costOutput"></div>
+    </div>
 </body>
 </html>
